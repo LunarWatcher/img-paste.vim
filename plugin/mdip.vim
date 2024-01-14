@@ -1,3 +1,5 @@
+" ver 0.2.1 (01/14/2024)
+
 " https://stackoverflow.com/questions/57014805/check-if-using-windows-console-in-vim-while-in-windows-subsystem-for-linux
 function! s:IsWSL()
     let lines = readfile("/proc/version")
@@ -11,14 +13,16 @@ function! s:SafeMakeDir()
     if !exists('g:mdip_imgdir_absolute')
         if s:os == "Windows"
             let outdir = expand('%:p:h') . '\' . g:mdip_imgdir
-    else
+        else
             let outdir = expand('%:p:h') . '/' . g:mdip_imgdir
         endif
     else
-	let outdir = g:mdip_imgdir
+        let outdir = g:mdip_imgdir
     endif
+    echo 'DEBUG22: ' . outdir
     if !isdirectory(outdir)
-        call mkdir(outdir,"p",0700)
+        echo 'DEBUG24 mkdir: ' . outdir
+        call mkdir(outdir,"p")
     endif
     if s:os == "Darwin"
         return outdir
@@ -122,27 +126,6 @@ function! s:SaveFileTMP(imgdir, tmpname)
     endif
 endfunction
 
-function! s:SaveNewFile(imgdir, tmpfile)
-    let extension = split(a:tmpfile, '\.')[-1]
-    let reldir = g:mdip_imgdir
-    let cnt = 0
-    let filename = a:imgdir . '/' . g:mdip_imgname . cnt . '.' . extension
-    let relpath = reldir . '/' . g:mdip_imgname . cnt . '.' . extension
-    while filereadable(filename)
-        call system('diff ' . a:tmpfile . ' ' . filename)
-        if !v:shell_error
-            call delete(a:tmpfile)
-            return relpath
-        endif
-        let cnt += 1
-        let filename = a:imgdir . '/' . g:mdip_imgname . cnt . '.' . extension
-        let relpath = reldir . '/' . g:mdip_imgname . cnt . '.' . extension
-    endwhile
-    if filereadable(a:tmpfile)
-        call rename(a:tmpfile, filename)
-    endif
-    return relpath
-endfunction
 
 function! s:InputName()
     let name = strftime("%Y%m%d-%H%M%S")
@@ -189,7 +172,6 @@ function! mdip#MarkdownClipboardImage()
     if tmpfile == 1
         return
     else
-        " let relpath = s:SaveNewFile(g:mdip_imgdir, tmpfile)
         let extension = split(tmpfile, '\.')[-1]
         let relpath = g:mdip_imgdir_intext . '/' . g:mdip_tmpname . '.' . extension
         if call(get(g:, 'PasteImageFunction'), [relpath])
@@ -211,7 +193,4 @@ if !exists('g:mdip_imgdir_intext')
 endif
 if !exists('g:mdip_tmpname')
     let g:mdip_tmpname = 'tmp'
-endif
-if !exists('g:mdip_imgname')
-    let g:mdip_imgname = 'image'
 endif
