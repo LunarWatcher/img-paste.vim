@@ -29,33 +29,18 @@ endfunction
 
 function! s:SaveFileTMPWSL(imgdir, tmpname) abort
     let tmpfile = a:imgdir . '/' . a:tmpname . '.png'
-    let tmpfile = substitute(tmpfile, "\/", "\\\\\\", "g")
-    if tmpfile =~ "mnt"
-        let tmpfile = substitute(tmpfile, "\\\\\\\\mnt\\\\\\\\c", "C:", "g")
-    else
-        let tmpfile = '\\\\wsl\$\\Ubuntu'.tmpfile
-    endif
+    let outfile = system('wslpath -w ' . tmpfile)[:-2]
+    let outfile = substitute(outfile, '\\', '\\\\', 'g')
+    echo 'DEBUG: ' . outfile
 
-    let clip_command = 'powershell.exe -nologo -noprofile -noninteractive -sta "Add-Type -Assembly PresentationCore;'.
-          \'\$img = [Windows.Clipboard]::GetImage();'.
-          \'if (\$img -eq \$null) {'.
-          \'echo "Do not contain image.";'.
-          \'Exit;'.
-          \'} else{'.
-          \'echo "good";}'.
-          \'\$fcb = new-object Windows.Media.Imaging.FormatConvertedBitmap(\$img, [Windows.Media.PixelFormats]::Rgb24, \$null, 0);'.
-          \'\$file = \"'. tmpfile . '\";'.
-          \'\$stream = [IO.File]::Open(\$file, \"OpenOrCreate\");'.
-          \'\$encoder = New-Object Windows.Media.Imaging.PngBitmapEncoder;'.
-          \'\$encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create(\$fcb));'.
-          \'\$encoder.Save(\$stream);\$stream.Dispose();"'
+    let cmdline1 = 'Add-Type -AssemblyName System.Windows.Forms;'
+    let cmdline2 = '[System.Windows.Forms.Clipboard]::GetImage().Save'
+    let cmdline = 'powershell.exe -command "' . cmdline1 . cmdline2 . "('" . outfile . "')\""
+    echo 'DEBUG: ' . cmdline
 
-    let result = system(clip_command)[:-3]
-    if result ==# "good"
-        return tmpfile
-    else
-        return 1
-    endif
+    let result = system(cmdline)[:-2]
+    echo 'DEBUG: ' . result
+    return tmpfile
 endfunction
 
 function! s:SaveFileTMPLinux(imgdir, tmpname) abort
@@ -123,6 +108,7 @@ function! s:SaveFileTMPMacOS(imgdir, tmpname) abort
 endfunction
 
 function! s:SaveFileTMP(imgdir, tmpname)
+    echo "DEBUG: " . a:imgdir . ' ' . a:tmpname
     if s:os == "Linux"
         " Linux could also mean Windowns Subsystem for Linux
         if s:IsWSL()
@@ -158,31 +144,19 @@ function! s:SaveNewFile(imgdir, tmpfile)
     return relpath
 endfunction
 
-function! s:RandomName()
-    " help feature-list
-    if has('win16') || has('win32') || has('win64') || has('win95')
-        let l:new_random = strftime("%Y-%m-%d-%H-%M-%S")
-        " creates a file like this: `2019-11-12-10-27-10.png`
-        " the filesystem on Windows does not allow : character.
-    else
-        let l:new_random = strftime("%Y-%m-%d-%H-%M-%S")
-    endif
-    return l:new_random
-endfunction
-
 function! s:InputName()
-    call inputsave()
-    let name = input('Image name: ')
-    call inputrestore()
+    let name = strftime("%Y%m%d-%H%M%S")
+    echo name
     return name
 endfunction
 
 function! g:MarkdownPasteImage(relpath)
-        execute "normal! i![" . g:mdip_tmpname[0:0]
-        let ipos = getcurpos()
-        execute "normal! a" . g:mdip_tmpname[1:] . "](" . a:relpath . ")"
-        call setpos('.', ipos)
-        execute "normal! vt]\<C-g>"
+    echo "DEBUG169: " . a:relpath
+    execute "normal! i![" . g:mdip_tmpname[0:0]
+    let ipos = getcurpos()
+    execute "normal! a" . g:mdip_tmpname[1:] . "](" . a:relpath . ")"
+    call setpos('.', ipos)
+    execute "normal! vt]\<C-g>"
 endfunction
 
 function! g:LatexPasteImage(relpath)
@@ -194,7 +168,7 @@ function! g:LatexPasteImage(relpath)
 endfunction
 
 function! g:EmptyPasteImage(relpath)
-    execute "normal! i" . a:relpath 
+    execute "normal! i" . a:relpath
 endfunction
 
 let g:PasteImageFunction = 'g:MarkdownPasteImage'
@@ -206,21 +180,10 @@ function! mdip#MarkdownClipboardImage()
         let s:os = substitute(system('uname'), '\n', '', '')
     endif
 
-    " add check whether file with the name exists
-    while  1
-        let workdir = s:SafeMakeDir()
-        " change temp-file-name and image-name
-        let g:mdip_tmpname = s:InputName()
-        if empty(g:mdip_tmpname)
-          let g:mdip_tmpname = g:mdip_imgname . '_' . s:RandomName()
-        endif
-        let testpath =  workdir . '/' . g:mdip_tmpname . '.png'
-        if filereadable(testpath) == 0
-            break
-        else
-            echo "\nThis file name already exists"
-        endif
-    endwhile
+    let workdir = s:SafeMakeDir()
+    " change temp-file-name and image-name
+    let g:mdip_tmpname = s:InputName()
+    let testpath =  workdir . '/' . g:mdip_tmpname . '.png'
 
     let tmpfile = s:SaveFileTMP(workdir, g:mdip_tmpname)
     if tmpfile == 1
