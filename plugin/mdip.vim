@@ -1,4 +1,15 @@
-echo 'img-paste.vim ver 0.2.7 (01/15/2024)'
+echo 'img-paste.vim ver 0.3.0 (01/16/2024)'
+
+let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+if !exists('g:mdip_imgdir')
+    let g:mdip_imgdir = 'img'
+endif
+if !exists('g:mdip_imgsite')
+    let g:mdip_imgsite = g:mdip_imgdir
+endif
+if !exists('g:mdip_imgpat')
+    let g:mdip_imgpat = '%Y%m%d-%H%M%S.png'
+endif
 
 " https://stackoverflow.com/questions/57014805/check-if-using-windows-console-in-vim-while-in-windows-subsystem-for-linux
 function! s:IsWSL()
@@ -7,6 +18,35 @@ function! s:IsWSL()
         return 1
     endif
     return 0
+endfunction
+
+function! s:GetCmdLine()
+    let s:os = "Windows"
+    let fscript = 'img-paste.ps1'
+    if !(has("win64") || has("win32") || has("win16"))
+        let s:os = substitute(system('uname'), '\n', '', '')
+        let fscript = 'img-paste.sh'
+    endif
+
+    let ch = g:mdip_imgdir[0]
+    if ch == '/' || ch == '\\' || ch == '~'
+        let outroot = expand(g:mdip_imgdir, ':p')
+    else
+        let outroot = expand('%:p:h') . '/' . g:mdip_imgdir
+    endif
+
+    let s:imgsubpath = strftime(g:mdip_imgpat)
+    let s:imgfullpath = outroot . '/' . s:imgsubpath
+
+    " get directory of current script
+    let cmdline = s:scriptdir . '/' . fscript . ' ' . s:imgfullpath
+
+    if s:os == "Windows"
+        cmdline = substitute(cmdline, '/', '\\', 'g')
+    endif
+
+    "echo 'DEBUG/cmdline: ' . cmdline
+    return cmdline
 endfunction
 
 function! s:SafeMakeDir(imgsubpath)
@@ -155,6 +195,24 @@ endfunction
 let g:PasteImageFunction = 'g:MarkdownPasteImage'
 
 function! mdip#MarkdownClipboardImage()
+    let cmdline = s:GetCmdLine()
+    let result = system(cmdline)[:-2]
+    if v:shell_error != 0
+        let msg = strftime("%H:%M:%S - ") . 'no image in clipboard'
+        echom msg
+        return
+    endif
+
+    let g:mdip_imgtitle = 'screenshot'
+    let msg = strftime("%H:%M:%S - ") . 'saved image to ' . s:imgfullpath
+    echom msg
+    let imgurl = g:mdip_imgsite . '/' . s:imgsubpath
+    if call(get(g:, 'PasteImageFunction'), [imgurl])
+        return
+    endif
+endfunction
+
+function! mdip#MarkdownClipboardImageV1()
     " detect os: https://vi.stackexchange.com/questions/2572/detect-os-in-vimscript
     let s:os = "Windows"
     if !(has("win64") || has("win32") || has("win16"))
@@ -179,13 +237,3 @@ function! mdip#MarkdownClipboardImage()
         endif
     endif
 endfunction
-
-if !exists('g:mdip_imgdir')
-    let g:mdip_imgdir = 'img'
-endif
-if !exists('g:mdip_imgsite')
-    let g:mdip_imgsite = g:mdip_imgdir
-endif
-if !exists('g:mdip_imgpat')
-    let g:mdip_imgpat = '%Y%m%d-%H%M%S.png'
-endif
