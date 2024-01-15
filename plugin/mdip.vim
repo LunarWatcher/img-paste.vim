@@ -70,8 +70,8 @@ function! mdip#MarkdownClipboardImage()
     endif
 
     let g:mdip_imgtitle = 'screenshot'
-    let msg = strftime("%H:%M:%S - ") . 'saved image to ' . s:imgfullpath
-    echom msg
+    "let msg = strftime("%H:%M:%S - ") . 'saved image to ' . s:imgfullpath
+    "echom msg
     let imgurl = g:mdip_imgsite . '/' . s:imgsubpath
     if call(get(g:, 'PasteImageFunction'), [imgurl])
         return
