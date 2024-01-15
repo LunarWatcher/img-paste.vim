@@ -1,4 +1,4 @@
-" ver 0.2.2 (01/14/2024)
+" ver 0.2.4 (01/15/2024)
 
 " https://stackoverflow.com/questions/57014805/check-if-using-windows-console-in-vim-while-in-windows-subsystem-for-linux
 function! s:IsWSL()
@@ -22,9 +22,9 @@ function! s:SafeMakeDir(imgsubpath)
         imgfullpath = substitute(imgfullpath, '/', '\\', 'g')
         outdir = substitute(outdir, '/', '\\', 'g')
     endif
-    echo 'DEBUG25: ' . outdir
+    "echo 'DEBUG25: ' . outdir
     if !isdirectory(outdir)
-        echo 'DEBUG27 mkdir: ' . outdir
+        "echo 'DEBUG27 mkdir: ' . outdir
         call mkdir(outdir, "p")
     endif
     if s:os == "Darwin"
@@ -34,23 +34,24 @@ function! s:SafeMakeDir(imgsubpath)
     endif
 endfunction
 
-function! s:SaveFileTMPWSL(imgpath) abort
-    let tmpfile = a:imgpath
-    let outfile = system('wslpath -w ' . tmpfile)[:-2]
+function! s:SaveFileWSL(imgpath) abort
+    let imgfile = a:imgpath
+    let result = system('touch ' . imgfile)
+    let outfile = system('wslpath -w ' . imgfile)[:-2]
     let outfile = substitute(outfile, '\\', '\\\\', 'g')
-    echo 'DEBUG: ' . outfile
+    "echo 'DEBUG42: ' . outfile
 
     let cmdline1 = 'Add-Type -AssemblyName System.Windows.Forms;'
     let cmdline2 = '[System.Windows.Forms.Clipboard]::GetImage().Save'
     let cmdline = 'powershell.exe -command "' . cmdline1 . cmdline2 . "('" . outfile . "')\""
-    echo 'DEBUG: ' . cmdline
+    "echo 'DEBUG: ' . cmdline
 
     let result = system(cmdline)[:-2]
-    echo 'DEBUG: ' . result
-    return tmpfile
+    "echo 'DEBUG: ' . result
+    return imgfile
 endfunction
 
-function! s:SaveFileTMPLinux(imgpath) abort
+function! s:SaveFileLinux(imgpath) abort
     if $WAYLAND_DISPLAY != "" && executable('wl-copy')
         let system_targets = "wl-paste --list-types"
         let system_clip = "wl-paste --no-newline --type %s > %s"
@@ -79,57 +80,56 @@ function! s:SaveFileTMPLinux(imgpath) abort
     return imgpath
 endfunction
 
-function! s:SaveFileTMPWin32(imgpath) abort
-    let tmpfile = a:imgpath
-    let tmpfile = substitute(tmpfile, '\\ ', ' ', 'g')
+function! s:SaveFileWin32(imgpath) abort
+    let imgfile = substitute(a:imgpath, '\\ ', ' ', 'g')
 
     let clip_command = "Add-Type -AssemblyName System.Windows.Forms;"
     let clip_command .= "if ($([System.Windows.Forms.Clipboard]::ContainsImage())) {"
     let clip_command .= "[System.Drawing.Bitmap][System.Windows.Forms.Clipboard]::GetDataObject().getimage().Save('"
-    let clip_command .= tmpfile ."', [System.Drawing.Imaging.ImageFormat]::Png) }"
+    let clip_command .= imgfile ."', [System.Drawing.Imaging.ImageFormat]::Png) }"
     let clip_command = "powershell -nologo -noprofile -noninteractive -sta \"".clip_command. "\""
 
     silent call system(clip_command)
     if v:shell_error == 1
         return 1
     else
-        return tmpfile
+        return imgfile
     endif
 endfunction
 
-function! s:SaveFileTMPMacOS(imgpath) abort
-    let tmpfile = a:imgpath
+function! s:SaveFileMacOS(imgpath) abort
+    let imgfile = a:imgpath
     let clip_command = 'osascript'
     let clip_command .= ' -e "set png_data to the clipboard as «class PNGf»"'
     let clip_command .= ' -e "set referenceNumber to open for access POSIX path of'
-    let clip_command .= ' (POSIX file \"' . tmpfile . '\") with write permission"'
+    let clip_command .= ' (POSIX file \"' . imgfile . '\") with write permission"'
     let clip_command .= ' -e "write png_data to referenceNumber"'
 
     silent call system(clip_command)
     if v:shell_error == 1
         return 1
     else
-        return tmpfile
+        return imgfile
     endif
 endfunction
 
-function! s:SaveFileTMP(imgpath)
-    echo "DEBUG: " . a:imgpath
+function! s:SaveFile(imgpath)
+    "echo 'DEBUG: ' . a:imgpath
     if s:os == "Linux"
         " Linux could also mean Windowns Subsystem for Linux
         if s:IsWSL()
-            return s:SaveFileTMPWSL(a:imgpath)
+            return s:SaveFileWSL(a:imgpath)
         endif
-        return s:SaveFileTMPLinux(a:imgpath)
+        return s:SaveFileLinux(a:imgpath)
     elseif s:os == "Darwin"
-        return s:SaveFileTMPMacOS(a:imgpath)
+        return s:SaveFileMacOS(a:imgpath)
     elseif s:os == "Windows"
-        return s:SaveFileTMPWin32(a:imgpath)
+        return s:SaveFileWin32(a:imgpath)
     endif
 endfunction
 
 function! g:MarkdownPasteImage(imgurl)
-    echo "DEBUG169: " . a:imgurl
+    "echo 'DEBUG169: ' . a:imgurl
     execute "normal! i![" . g:mdip_imgtitle[0:0]
     let ipos = getcurpos()
     execute "normal! a" . g:mdip_imgtitle[1:] . "](" . a:imgurl . ")"
@@ -162,8 +162,8 @@ function! mdip#MarkdownClipboardImage()
     let imgfullpath = s:SafeMakeDir(imgsubpath)
     let g:mdip_imgtitle = 'screenshot'
 
-    let tmpfile = s:SaveFileTMP(imgfullpath)
-    if tmpfile == 1
+    let imgfile = s:SaveFile(imgfullpath)
+    if imgfile == 1
         return
     else
         let imgurl = g:mdip_imgsite . '/' . imgsubpath
