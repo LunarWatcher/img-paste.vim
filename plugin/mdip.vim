@@ -1,4 +1,4 @@
-" ver 0.2.4 (01/15/2024)
+echo 'ver 0.2.6 (01/15/2024)'
 
 " https://stackoverflow.com/questions/57014805/check-if-using-windows-console-in-vim-while-in-windows-subsystem-for-linux
 function! s:IsWSL()
@@ -22,7 +22,6 @@ function! s:SafeMakeDir(imgsubpath)
         imgfullpath = substitute(imgfullpath, '/', '\\', 'g')
         outdir = substitute(outdir, '/', '\\', 'g')
     endif
-    "echo 'DEBUG25: ' . outdir
     if !isdirectory(outdir)
         "echo 'DEBUG27 mkdir: ' . outdir
         call mkdir(outdir, "p")
@@ -36,6 +35,7 @@ endfunction
 
 function! s:SaveFileWSL(imgpath) abort
     let imgfile = a:imgpath
+    " create an empty file, otherwise wslpath -w will fail
     let result = system('touch ' . imgfile)
     let outfile = system('wslpath -w ' . imgfile)[:-2]
     let outfile = substitute(outfile, '\\', '\\\\', 'g')
@@ -47,7 +47,10 @@ function! s:SaveFileWSL(imgpath) abort
     "echo 'DEBUG: ' . cmdline
 
     let result = system(cmdline)[:-2]
-    "echo 'DEBUG: ' . result
+    if v:shell_error != 0
+        let result = system('rm -f ' . imgfile)
+        return 1
+    endif
     return imgfile
 endfunction
 
@@ -164,8 +167,12 @@ function! mdip#MarkdownClipboardImage()
 
     let imgfile = s:SaveFile(imgfullpath)
     if imgfile == 1
+        let msg = strftime("%H:%M:%S - ") . 'no image in clipboard'
+        echom msg
         return
     else
+        let msg = strftime("%H:%M:%S - ") . 'saved image to ' . imgfile
+        echom msg
         let imgurl = g:mdip_imgsite . '/' . imgsubpath
         if call(get(g:, 'PasteImageFunction'), [imgurl])
             return
