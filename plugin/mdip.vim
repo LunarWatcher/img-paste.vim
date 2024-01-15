@@ -1,4 +1,4 @@
-echo 'ver 0.2.6 (01/15/2024)'
+echo 'img-paste.vim ver 0.2.7 (01/15/2024)'
 
 " https://stackoverflow.com/questions/57014805/check-if-using-windows-console-in-vim-while-in-windows-subsystem-for-linux
 function! s:IsWSL()
@@ -12,7 +12,7 @@ endfunction
 function! s:SafeMakeDir(imgsubpath)
     let ch = g:mdip_imgdir[0]
     if ch == '/' || ch == '\\' || ch == '~'
-        let outroot = g:mdip_imgdir
+        let outroot = expand(g:mdip_imgdir, ':p')
     else
         let outroot = expand('%:p:h') . '/' . g:mdip_imgdir
     endif
@@ -180,11 +180,11 @@ function! mdip#MarkdownClipboardImage()
     endif
 endfunction
 
-if !exists('g:mdip_imgsite')
-    let g:mdip_imgsite = g:mdip_imgdir
-endif
 if !exists('g:mdip_imgdir')
     let g:mdip_imgdir = 'img'
+endif
+if !exists('g:mdip_imgsite')
+    let g:mdip_imgsite = g:mdip_imgdir
 endif
 if !exists('g:mdip_imgpat')
     let g:mdip_imgpat = '%Y%m%d-%H%M%S.png'
