@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="img-paste.sh ver 0.1.0 (01/16/2024)"
+VERSION="img-paste.sh ver 0.1.1 (01/16/2024)"
 set -eu -o pipefail
 
 function usage() {
@@ -31,6 +31,8 @@ function cleanup() {
 }
 
 function wsl_paste() {
+    # wslpath in old WSL needs existance of $OUT_FILE
+    touch $OUT_FILE
     local outfile=$(wslpath -w $OUT_FILE)
     local cmdline1="Add-Type -AssemblyName System.Windows.Forms"
     local cmdline2="[System.Windows.Forms.Clipboard]::GetImage().Save"
@@ -47,7 +49,6 @@ function main() {
     config "$@"
     prepare
     $PROC
-    echo $OUT_FILE
     ls -l $OUT_FILE
 }
 
