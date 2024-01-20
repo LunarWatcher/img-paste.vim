@@ -11,7 +11,7 @@ Rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-
 
 ### Relative directory
 
-Configuration in .vimrc, vimrc
+Configuration in vimrc (~/.vimrc, ~/.vim/vimrc, or ~/.vim/init.vim)
 
 ```
 let g:mdip_imgsite = 'img'
@@ -24,7 +24,7 @@ let g:mdip_imgfile = '%Y%m%d-%H%M%S.png'
 
 ### Absolute directory
 
-Configuration in .vimrc
+Configuration in vimrc
 
 ```
 let g:mdip_imgsite = '/img'
@@ -73,6 +73,10 @@ require('lazy').setup({
   ...
 })
 ```
+
+### for Linux
+
+Install wl-paste or xclip
 
 ## Tested on
 
