@@ -1,4 +1,4 @@
-echo 'img-paste.vim ver 0.3.1 (01/16/2024)'
+echo 'img-paste.vim ver 0.4.0 (01/20/2024)'
 
 let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 if !exists('g:mdip_imgdir')

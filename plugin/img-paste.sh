@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="img-paste.sh ver 0.1.1 (01/16/2024)"
+VERSION="img-paste.sh ver 0.2.0 (01/20/2024)"
 set -eu -o pipefail
 
 function usage() {
@@ -16,7 +16,10 @@ function config() {
     test $# -gt 0 || usage
     OUT_FILE=$1
     which wslpath >/dev/null 2>&1 && PROC=wsl_paste && return 0
-    PROC=linux_paste
+    test -v WAYLAND_DISPLAY && which wl-paste >/dev/null 2>&1 && PROC=wl_paste && return 0
+    test -v DISPLAY && which xclip >/dev/null 2>&1 && PROC=xclip_paste && return 0
+    echo "No clipboard command found." >&2
+    exit 1
 }
 
 function prepare() {
@@ -40,7 +43,19 @@ function wsl_paste() {
     powershell.exe -command "$cmdline"
 }
 
-function linux_paste() {
+function wl_paste() {
+    wl-paste --list-types | grep -q image/png || {
+        echo "No image in clipboard." >&2
+        return 1
+    }
+    wl-paste --no-newline --type image/png > $OUT_FILE
+}
+
+function xclip_paste() {
+    xclip -selection clipboard -t TARGETS -o | grep -q image/png || {
+        echo "No image in clipboard." >&2
+        return 1
+    }
     xclip -selection clipboard -t image/png -o > $OUT_FILE
 }
 
