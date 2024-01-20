@@ -9,7 +9,7 @@ Rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-
 
 ## Use Cases
 
-### Relative dir
+### Relative directory
 
 Configuration in .vimrc, vimrc
 
@@ -20,9 +20,9 @@ let g:mdip_imgfile = '%Y%m%d-%H%M%S.png'
 ```
 
 - Save image to "img" sub dir (relative to current document),
-- Generate link like "![screenshot](img/20240120-201435.png)"
+- Generate link like "! [screenshot] (img/20240120-201435.png)"
 
-### Absolute dir
+### Absolute directory
 
 Configuration in .vimrc
 
@@ -36,10 +36,12 @@ let g:mdip_imgfile = '%Y/%m/%d-%H%M%S-%R.png'
 - Oranized by year & month
 - Generate link like "! [screenshot] (/img/2024/01/20-201435-1ac8d5f.png)"
 
-If you'd manage all your screenshot in a picture web site, you can config like this way.
-You can also use an web site url. e.g.
+To manage all your screenshots in a picture web site, you can config like this way.
+You can also use a web site url. e.g.
 
+```vim
 let g:mdip_imgsite = 'https://pic.my.site/img'
+```
 
 The link will be
 
@@ -48,7 +50,7 @@ The link will be
 ## Pattern of file name/path
 
 - g:mdip_imgfile supports pattern in [strftime](https://strftime.org/)
-- can use "/" in the pattern. "/" will auto create sub directory.
+- can use "/" in the pattern. "/" will auto create sub directories.
 - use "%R" for a 6-char random string.
 
 ## Installation & Configuration
@@ -76,4 +78,4 @@ require('lazy').setup({
 
 - vim 9.1, nevim 0.9.5, 0.10.0
 - WSL2 on Windows 10/11
-- Linux: Ubuntu 20/22, arch linux
+- Linux: Ubuntu 20/22, Arch Linux
