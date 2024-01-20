@@ -1,14 +1,14 @@
-echo 'img-paste.vim ver 0.4.2 (01/20/2024)'
+echo 'img-paste.vim ver 0.5.0 (01/20/2024)'
 
 let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
-if !exists('g:mdip_imgdir')
-    let g:mdip_imgdir = 'img'
+if !exists('g:mdip_imgroot')
+    let g:mdip_imgroot = 'img'
 endif
 if !exists('g:mdip_imgsite')
-    let g:mdip_imgsite = g:mdip_imgdir
+    let g:mdip_imgsite = g:mdip_imgroot
 endif
-if !exists('g:mdip_imgpat')
-    let g:mdip_imgpat = '%Y%m%d-%H%M%S.png'
+if !exists('g:mdip_imgfile')
+    let g:mdip_imgfile = '%Y%m%d-%H%M%S.png'
 endif
 
 function! s:GetCmdLine()
@@ -19,14 +19,14 @@ function! s:GetCmdLine()
         let fscript = 'img-paste.sh'
     endif
 
-    let ch = g:mdip_imgdir[0]
+    let ch = g:mdip_imgroot[0]
     if ch == '/' || ch == '\\' || ch == '~'
-        let outroot = expand(g:mdip_imgdir, ':p')
+        let outroot = expand(g:mdip_imgroot, ':p')
     else
-        let outroot = expand('%:p:h') . '/' . g:mdip_imgdir
+        let outroot = expand('%:p:h') . '/' . g:mdip_imgroot
     endif
 
-    let s:imgsubpath = strftime(g:mdip_imgpat)
+    let s:imgsubpath = strftime(g:mdip_imgfile)
     let s:imgfullpath = outroot . '/' . s:imgsubpath
 
     let cmdline = s:scriptdir . '/' . fscript . ' ' . s:imgfullpath
