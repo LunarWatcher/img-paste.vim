@@ -1,64 +1,79 @@
 # img-paste.vim
-Yet simple tool to paste images into markdown files
 
-## Use Case
-You are editing a markdown file and have an image on the clipboard and want to paste it into the document as the text `![](img/image1.png)`. Instead of first copying it to that directory, you want to do it with a single `<leader>p` key press in Vim. So it hooks `<leader>p`, checks if you are editing a Markdown file, saves the image from the clipboard to the location  `img/image1.png`, and inserts `![](img/image1.png)` into the file.
+vim/neovim plugin. Paste image, auto save to specified dir/name, and generate markdown link.
 
-By default, the location of the saved file (`img/image1.png`) and the in-text reference (`![](img/image1.png`) are identical. You can change this behavior by specyfing an absolute path to save the file (`let g:mdip_imgdir_absolute = /absolute/path/to/imgdir` on linux) and a different path for in-text references (`let g:mdip_imgdir_intext = /relative/path/to/imgdir` on linux). 
+Rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-paste.vim). Simplify it, and make it work for current WSL.
 
-## Installation
+- Auto naming the image files with pattern.
+- Separate the scripts for debugging standalone.
 
-Using Vundle
+## Use Cases
+
+### Relative dir
+
+Configuration in .vimrc, vimrc
+
 ```
-Plugin 'img-paste-devs/img-paste.vim'
-```
-
-## Usage
-Add to .vimrc
-```
-autocmd FileType markdown nmap <buffer><silent> <leader>p :call mdip#MarkdownClipboardImage()<CR>
-" there are some defaults for image directory and image name, you can change them
-" let g:mdip_imgdir = 'img'
-" let g:mdip_imgname = 'image'
+let g:mdip_imgsite = 'img'
+let g:mdip_imgroot = 'img'
+let g:mdip_imgfile = '%Y%m%d-%H%M%S.png'
 ```
 
-### Extend to other markup languages ###
-Simply add a custom paste function that accepts the relative path to the image as an argument, and set `g:PasteImageFunction` to the name of your function. E.g. 
-```
-function! g:LatexPasteImage(relpath)
-    execute "normal! i\\includegraphics{" . a:relpath . "}\r\\caption{I"
-    let ipos = getcurpos()
-    execute "normal! a" . "mage}"
-    call setpos('.', ipos)
-    execute "normal! ve\<C-g>"
-endfunction
-```
-Then in your .vimrc:
-```
-autocmd FileType markdown let g:PasteImageFunction = 'g:MarkdownPasteImage'
-autocmd FileType tex let g:PasteImageFunction = 'g:LatexPasteImage'
-```
-The former sets the (default) markdown paste function for markdown files, while the latter sets the new latex paste function to be used in latex/tex files. The above LatesPasteImage has already been added to the plugin, see `plugin/mdip.vim`. Existing paste functions:
+- Save image to "img" sub dir (relative to current document),
+- Generate link like "![screenshot](img/20240120-201435.png)"
 
-Finally, add the file type (e.g. `tex`) to the first line you added, as
+### Absolute dir
+
+Configuration in .vimrc
+
 ```
-autocmd FileType markdown,tex nmap <buffer><silent> <leader>p :call mdip#MarkdownClipboardImage()<CR>
-                        '----'
+let g:mdip_imgsite = '/img'
+let g:mdip_imgroot = '~/Pictures/screenshot'
+let g:mdip_imgfile = '%Y/%m/%d-%H%M%S-%R.png'
 ```
 
-| Filetype | Function name | Content |
-|----------|---------------|---------|
-| Markdown | MarkdownPasteImage | `![Image](path)` |
-| Latex | LatexPasteImage | `\includegraphics{path} \caption{Image}` |
-| N/A  | EmptyPasteImage | `path` |
+- Store all images to ~/Pictures/screenshot
+- Oranized by year & month
+- Generate link like "! [screenshot] (/img/2024/01/20-201435-1ac8d5f.png)"
 
-PRs welcome
+If you'd manage all your screenshot in a picture web site, you can config like this way.
+You can also use an web site url. e.g.
 
-### For linux user
-This plugin gets clipboard content by running the `xclip` command.
+let g:mdip_imgsite = 'https://pic.my.site/img'
 
-install `xclip` first.
+The link will be
 
-## Acknowledgements
-I'm not yet perfect at writing vim plugins but I managed to do it. Thanks to [Karl Yngve Lervåg](https://vi.stackexchange.com/users/21/karl-yngve-lerv%C3%A5g) and [Rich](https://vi.stackexchange.com/users/343/rich) for help on [vi.stackexchange.com](https://vi.stackexchange.com/questions/14114/paste-link-to-image-in-clipboard-when-editing-markdown) where they proposed a solution for my use case.
+! [screenshot] (https://pic.my.site/img/2024/01/20-201435-1ac8d5f.png)
 
+## Pattern of file name/path
+
+- g:mdip_imgfile supports pattern in [strftime](https://strftime.org/)
+- can use "/" in the pattern. "/" will auto create sub directory.
+- use "%R" for a 6-char random string.
+
+## Installation & Configuration
+
+vimrc for [vim-plug](https://github.com/junegunn/vim-plug),
+[Vundle.vim](https://github.com/VundleVim/Vundle.vim), etc
+
+```vim
+Plugin 'loblab/img-paste.vim'
+
+nnoremap <C-i> :call mdip#MarkdownClipboardImage()<CR>
+```
+
+init.lua for [lazy.vim](https://github.com/folke/lazy.nvim)
+
+```lua
+require('lazy').setup({
+  ...
+  'loblab/img-paste.vim',
+  ...
+})
+```
+
+## Tested on
+
+- vim 9.1, nevim 0.9.5, 0.10.0
+- WSL2 on Windows 10/11
+- Linux: Ubuntu 20/22, arch linux

@@ -1,4 +1,4 @@
-let VERSION = 'img-paste.vim ver 0.5.3 (01/20/2024)'
+let VERSION = 'img-paste.vim ver 0.5.4 (01/20/2024)'
 
 let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 if !exists('g:mdip_imgroot')
@@ -27,7 +27,7 @@ function! s:GetCmdLine()
     endif
 
     let rstr = printf('%06x', rand() % 0xffffff)
-    let pattern = substitute(g:mdip_imgfile, '%x', rstr, 'g')
+    let pattern = substitute(g:mdip_imgfile, '%R', rstr, 'g')
     let s:imgsubpath = strftime(pattern)
     let s:imgfullpath = outroot . '/' . s:imgsubpath
 
