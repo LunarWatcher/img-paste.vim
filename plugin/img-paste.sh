@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="img-paste.sh ver 0.2.4 (01/20/2024)"
+VERSION="img-paste.sh ver 0.2.6 (01/20/2024)"
 set -eu -o pipefail
 
 function usage() {
@@ -14,7 +14,7 @@ Usage:
 
 function config() {
     readonly RC_NOIMGDATA=3
-    readonly MSG_NOIMGDATA="No image data in clipboard."
+    readonly MSG_NOIMGDATA="No image data in clipboard"
 
     test $# -gt 0 || usage
     OUT_FILE=$1
@@ -44,7 +44,7 @@ function wsl_paste() {
     local cmdline=$(cat << EOF
         \$img = get-clipboard -format image
         if (\$img -eq \$null) {
-            Write-Host "$MSG_NOIMGDATA"
+            [System.Console]::Error.WriteLine("$MSG_NOIMGDATA")
             Exit $RC_NOIMGDATA
         }
         echo "Saving image to $outfile"

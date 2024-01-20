@@ -1,4 +1,4 @@
-echo 'img-paste.vim ver 0.5.0 (01/20/2024)'
+echo 'img-paste.vim ver 0.5.1 (01/20/2024)'
 
 let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 if !exists('g:mdip_imgroot')
@@ -62,9 +62,9 @@ let g:PasteImageFunction = 'g:MarkdownPasteImage'
 
 function! mdip#MarkdownClipboardImage()
     let cmdline = s:GetCmdLine() . ' 2>&1 >/dev/null'
-    let errmsg = systemlist(cmdline)[-1]
+    let errmsg = system(cmdline)
     if v:shell_error != 0
-        let msg = strftime("%H:%M:%S - ") . errmsg
+        let msg = strftime("%H:%M:%S - ") . errmsg[:-3]
         echom msg
         return
     endif
