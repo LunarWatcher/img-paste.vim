@@ -7,6 +7,26 @@ Rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-
 - Auto naming the image files with pattern.
 - Separate the scripts for debugging standalone.
 
+## Quick start
+
+Install the plugin, ref following config
+
+```vim
+" for vim-plug, change for your plugin manager
+Plugin 'loblab/img-paste.vim'
+
+" modify for your keymap setting
+nnoremap <C-i> :call mdip#MarkdownClipboardImage()<CR>
+```
+
+Copy image to clipboard,
+
+vim doc.md
+
+Press "Ctrl+i" (as above setting), you will get image in "img" dir, and see the link in doc.md:
+
+! [screenshot] (img/20240120-201435.png)
+
 ## Use Cases
 
 ### Relative directory
