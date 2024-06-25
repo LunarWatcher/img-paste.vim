@@ -1,0 +1,156 @@
+*imgpaste*       A plugin for pasting images into files, similar to modern editors
+*img-paste* *img-paste.vim*
+
+License: MIT
+URL: https://github.com/LunarWatcher/img-paste.vim
+        
+================================================================================
+Table of contents~
+
+    1. Introduction ........................... |imgpaste-introduction|
+        1.1. What imgpaste is not ............. |imgpaste-not|
+    2. Supported formats ...................... |imgpaste-formats|
+        2.1. Built-in formats ................. |imgpaste-builtin-formats|
+    3. Config options ......................... |imgpaste-config|
+         ...................................... |g:ImgpasteFormatMap|
+         ...................................... |g:ImgpasteFormatters|
+    4. Custom formatters ...................... |imgpaste-formatters|
+        4.1. Formatter lookup order ........... |imgpaste-formatter-lookup|
+        4.1.1. Plugin definitions ............. |imgpaste-formatter-plugin-syntax|
+
+================================================================================
+1. Introduction                                            *imgpaste-introduction*
+
+
+
+--------------------------------------------------------------------------------
+1.1. What imgpaste is not                                           *imgpaste-not*
+
+While imgpaste allows you to paste images, it does not render these images. If
+you want to render images within vim, you're using the wrong editor.
+There are plugins that deal with image previewing (including a few promising
+ones), but these are heavily terminal- or OS-dependent (or even both). 
+
+There are improvements being made in this area in general, though it'll take a
+while before any of it makes it to Vim. Particularly
+    https://github.com/libsixel/libsixel
+is promising. However, until anything is standardised, getting image preview
+support directly into Vim is unlikely.
+
+There are cross-platform plugins that deal with external markdown previewing,
+however. This notably includes
+    https://github.com/iamcco/markdown-preview.nvim
+
+Unfortunately, it starts a webserver, so it's not a particularly light-weight
+plugin. There are several plugins doing this, so there's probably lighter
+alternatives if you really need previewing.
+
+================================================================================
+2. Supported formats                                            *imgpaste-formats*
+
+--------------------------------------------------------------------------------
+2.1. Built-in formats                                   *imgpaste-builtin-formats*
+
+Out-of-the-box, the following formats are supported:
+
+* Markdown (enabled in filetypes: markdown)
+* LaTeX (enabled in filetypes: tex)
+
+================================================================================
+3. Config options                                                *imgpaste-config*
+
+--------------------------------------------------------------------------------
+                                                             *g:ImgpasteFormatMap*
+                                                             dict
+
+Format: >
+    { 'filetype': 'imgpaste-specific format identifier' }
+<
+
+Default: >
+    {'markdown': 'markdown', 'tex': 'tex'}
+<
+Note: This default will always be present. You can modify the defaults by
+overriding them in your .vimrc, but there's no way to remove entries from this
+map.
+
+If you want to add another filetype to use an already-existing formatter, this
+is the map you modify. For example, if you want to paste images into a C++ file,
+and use the markdown formatter for it, you'd use: >
+    let g:ImgpasteFormatMap = { 'cpp': 'markdown' }
+<
+
+If you want to expand with a custom format, see |imgpaste-formatters|.
+
+--------------------------------------------------------------------------------
+                                                            *g:ImgpasteFormatters*
+                                                            dict
+
+Format: >
+    { 'format_name': funcref(YourFuncName) }
+<
+Note that the function must adhere to |imgpaste-formatter-function|
+
+================================================================================
+4. Custom formatters                                         *imgpaste-formatters*
+
+One of the key features of this fork is the arbitrary extensibility of
+formatters; while an unofficial goal for this plugin is to support as many
+filetypes as possible, there are reasons to have non-standard formatters.
+
+You could have a project with weird standards, you could have your own, personal
+preferences for how something should be pasted, or want to expand with
+additional features not enabled out-of-the-box. One example is LaTeX; by
+default, just the \includegraphics statement is inserted. However, if you want a
+full figure to be inserted, write a custom LaTeX formatter.
+
+--------------------------------------------------------------------------------
+4.1. Defining a formatter                          *imgpaste-formatter-definition*
+
+This step deals with making your function discoverable, and not the format of
+the function itself. For that, see |imgpaste-formatter-function|, which is
+identical for both options presented here.
+
+Option 1: Creating a plugin~
+
+To create a custom formatter, you need a function named
+`Imgpaste_{format_name}#register`. This strategy is inspired by PaperColor. This
+means you need an autoload file named `autoload/Imgpaste_{format_name}`, with
+the content >
+    fun! Imgpaste_{format_name}#register(...)
+
+    endfun
+<
+See |imgpaste-formatter-function| for the exact function signature and various
+utility methods.
+
+Option 2: Creating a function~
+
+If you don't want or don't know how to set up an autoload file, you can instead
+make use of |g:ImgpasteFormatters|. See the associated documentation for
+guidance on the setup.
+
+--------------------------------------------------------------------------------
+4.2. Formatter function specification                *imgpaste-formatter-function*
+
+Once you've picked how you want to make your function discoverable, it's time
+to write the formatter. The signature of the formatter function is: >
+    fun! [function name as per section 4.1](imgurl)
+
+    endfun
+<
+
+Where:
+* `imgurl` (|vim9-types|: `string`)
+    defines the path to the image to embed. This is determined by other dark
+    magic in the plugin that I'll link to when I document it.
+
+
+--------------------------------------------------------------------------------
+4.3. Formatter helper functions
+
+                                                          *imgformat#insert(text)*
+Inserts the provided {text} at the cursor location
+
+
+vim:ft=help

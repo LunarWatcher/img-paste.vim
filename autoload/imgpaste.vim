@@ -1,4 +1,11 @@
-let VERSION = 'img-paste.vim ver 0.5.4 (01/20/2024)'
+
+g:ImgpasteFormatMap = extend(
+    {
+        'markdown': 'markdown',
+        'tex': 'tex'
+    },
+    get(g:, 'ImgpasteFormatMap', {})
+)
 
 let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 if !exists('g:mdip_imgroot')
