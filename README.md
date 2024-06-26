@@ -2,17 +2,18 @@
 
 Heavily refactored version of [loblab/img-paste.vim](https://github.com/loblab/img-paste.vim) (which itself is a rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-paste.vim)). Also rewritten with vim9script, because I can :)
 
-**NOTE:** The plugin is currently borked, as it's in the middle of a major refactor.
-
 ## Quick start
 
 ```vim
 " for vim-plug, change for your plugin manager
 Plug 'LunarWatcher/img-paste.vim'
-
-" modify for your keymap setting
-nnoremap <C-i> :call imgpaste#MarkdownClipboardImage()<CR>
 ```
+
+Use `<C-i>` in normal mode to paste images. Config coming Soon:tm:. See also `:h imgpaste` for more documentation.
+
+## Changes from upstream
+* Vim9script
+* There's a well-defined interface for defining arbitrary custom paste formats, and for defining what filetypes use what format
 
 ## License 
 
