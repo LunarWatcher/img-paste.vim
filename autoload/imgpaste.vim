@@ -1,4 +1,6 @@
+vim9script
 
+# Globals {{{
 g:ImgpasteFormatMap = extend(
     {
         'markdown': 'markdown',
@@ -7,83 +9,77 @@ g:ImgpasteFormatMap = extend(
     get(g:, 'ImgpasteFormatMap', {})
 )
 
-let s:scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
-if !exists('g:mdip_imgroot')
-    let g:mdip_imgroot = 'img'
+if !exists("g:ImgpasteRootDir")
+    g:ImgpasteRootDir = "images"
 endif
-if !exists('g:mdip_imgsite')
-    let g:mdip_imgsite = g:mdip_imgroot
+if !exists("g:ImgpasteDefaultName")
+    g:ImgpasteDefaultName = "%Y%m%d-%H%M%S.png"
 endif
-if !exists('g:mdip_imgfile')
-    let g:mdip_imgfile = '%Y%m%d-%H%M%S.png'
-endif
+# }}}
+# Local config {{{
+var scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h:h') .. "/scripts/"
+# }}}
 
-function! s:GetCmdLine()
-    let s:os = "Windows"
-    let fscript = 'img-paste.ps1'
+
+def GetCmdLine(): list<string>
+    var os = "Windows"
+    var fscript = 'img-paste.ps1'
     if !(has("win64") || has("win32") || has("win16"))
-        let s:os = substitute(system('uname'), '\n', '', '')
-        let fscript = 'img-paste.sh'
+        os = substitute(system('uname'), '\n', '', '')
+        fscript = 'img-paste.sh'
     endif
 
-    let ch = g:mdip_imgroot[0]
-    if ch == '/' || ch == '\\' || ch == '~'
-        let outroot = expand(g:mdip_imgroot, ':p')
-    else
-        let outroot = expand('%:p:h') . '/' . g:mdip_imgroot
-    endif
+    var ch = g:ImgpasteRootDir[0]
+    var outroot: string = ""
+    outroot = expand('%:p:h') .. '/' .. g:ImgpasteRootDir
 
-    let rstr = printf('%06x', rand() % 0xffffff)
-    let pattern = substitute(g:mdip_imgfile, '%R', rstr, 'g')
-    let s:imgsubpath = strftime(pattern)
-    let s:imgfullpath = outroot . '/' . s:imgsubpath
+    var rstr = printf('%06x', rand() % 0xffffff)
+    var pattern = substitute(g:ImgpasteDefaultName, '%R', rstr, 'g')
+    var imgsubpath = strftime(pattern)
+    var imgfullpath = outroot .. '/' .. imgsubpath
 
-    let cmdline = s:scriptdir . '/' . fscript . ' ' . s:imgfullpath
+    var cmdline = scriptdir .. '/' .. fscript .. ' ' .. imgfullpath
 
-    if s:os == "Windows"
+    if os == "Windows"
         cmdline = substitute(cmdline, '/', '\\', 'g')
     endif
 
-    return cmdline
-endfunction
+    return [ cmdline, imgfullpath ]
+enddef
 
-function! g:MarkdownPasteImage(imgurl)
-    execute "normal! i![" . g:mdip_imgtitle[0:0]
-    let ipos = getcurpos()
-    execute "normal! a" . g:mdip_imgtitle[1:] . "](" . a:imgurl . ")"
-    call setpos('.', ipos)
-    execute "normal! vt]\<C-g>"
-endfunction
 
-function! g:LatexPasteImage(imgurl)
-    execute "normal! i\\includegraphics{" . a:imgurl . "}\r\\caption{I"
-    let ipos = getcurpos()
-    execute "normal! a" . "mage}"
-    call setpos('.', ipos)
-    execute "normal! ve\<C-g>"
-endfunction
+export def InsertImage()
+    var Printer: func = null_function
 
-function! g:EmptyPasteImage(imgurl)
-    execute "normal! i" . a:imgurl
-endfunction
+    if exists("g:ImgpasteFormatters") && g:ImgpasteFormatters->has_key(&ft)
+        Printer = g:ImgpasteFormatters[&ft]
+    else
+        if !exists("*imgpaste#formatters#" .. &ft .. "#Format")
+            # Force-load the autoload file, if it exists
+            # This doesn't seem to have any effect if the file doesn't exist,
+            # so no error handling required
+            # In an exists() block because why not?
+            exec "runtime autoload/imgpaste/formatters/" .. &ft .. ".vim"
+        endif
+        if exists("*imgpaste#formatters#" .. &ft .. "#Format")
+            Printer = funcref("imgpaste#formatters#" .. &ft .. "#Format")
+        endif
+    endif
 
-let g:PasteImageFunction = 'g:MarkdownPasteImage'
+    if (Printer == null_function)
+        echoerr "Image pasting not supported for this filetype:" &ft 
+        return
+    endif
+    var res = GetCmdLine()
+    var cmdline = res[0]
+    var path = res[1]
 
-function! mdip#MarkdownClipboardImage()
-    let cmdline = s:GetCmdLine() . ' 2>&1 >/dev/null'
-    let errmsg = system(cmdline)
+    var execRes = system(cmdline)
+
     if v:shell_error != 0
-        let errmsg = substitute(errmsg, '\s*\r*\n$', '', 'g')
-        let msg = strftime("%H:%M:%S - ") . errmsg
-        echom msg
+        echo execRes
         return
     endif
 
-    let g:mdip_imgtitle = 'screenshot'
-    "let msg = strftime("%H:%M:%S - ") . 'saved image to ' . s:imgfullpath
-    "echom msg
-    let imgurl = g:mdip_imgsite . '/' . s:imgsubpath
-    if call(get(g:, 'PasteImageFunction'), [imgurl])
-        return
-    endif
-endfunction
+    Printer(path)
+enddef

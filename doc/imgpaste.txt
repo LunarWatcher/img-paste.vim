@@ -105,52 +105,59 @@ default, just the \includegraphics statement is inserted. However, if you want a
 full figure to be inserted, write a custom LaTeX formatter.
 
 --------------------------------------------------------------------------------
-4.1. Defining a formatter                          *imgpaste-formatter-definition*
+4.1. Built-in formatters                             *imgpaste-builtin-formatters*
 
-This step deals with making your function discoverable, and not the format of
-the function itself. For that, see |imgpaste-formatter-function|, which is
-identical for both options presented here.
+The following formatters are built directly into imgpaste:
 
-Option 1: Creating a plugin~
-
-To create a custom formatter, you need a function named
-`Imgpaste_{format_name}#register`. This strategy is inspired by PaperColor. This
-means you need an autoload file named `autoload/Imgpaste_{format_name}`, with
-the content >
-    fun! Imgpaste_{format_name}#register(...)
-
-    endfun
-<
-See |imgpaste-formatter-function| for the exact function signature and various
-utility methods.
-
-Option 2: Creating a function~
-
-If you don't want or don't know how to set up an autoload file, you can instead
-make use of |g:ImgpasteFormatters|. See the associated documentation for
-guidance on the setup.
+* `markdown`
+* `tex`
+* `plain`       Inserts only the image URL
 
 --------------------------------------------------------------------------------
-4.2. Formatter function specification                *imgpaste-formatter-function*
+4.2. Defining a formatter                              *imgpaste-define-formatter*
 
-Once you've picked how you want to make your function discoverable, it's time
-to write the formatter. The signature of the formatter function is: >
-    fun! [function name as per section 4.1](imgurl)
+Defining custom formatters is done in one of two days:
+1. By using |g:ImgpasteFormatters|; only recommended if you aren't writing a
+    plugin, or if you need to override builtins. Please do not use if you're
+    writing a plugin, as this makes it harder for end-users to specify custom
+    formatters.
+2. By defining an autoload file with a specially named function
 
+In both cases, a function with the signature `(imgurl: string)` is used. Also
+note that the lookup order is the same as the above list; if
+|g:ImgpasteFormatters| defines a formatter, it takes presedence over autoload
+lookup.
+
+Option 1: Variable~
+
+See |g:ImgpasteFormatters| for some more details. For declaring formatters, this
+is what a common setup may look like: >
+    fun! FormatPotato(imgurl)
+        
     endfun
+    " You can set g:ImgpasteFormatMap directly without extend, but this is the
+    " recommended approach
+    let g:ImgpasteFormatMap = extend(get(g:, 'ImgpasteFormatMap', {}), {
+        'potato': funcref("FormatPotato")
+    })
 <
 
-Where:
-* `imgurl` (|vim9-types|: `string`)
-    defines the path to the image to embed. This is determined by other dark
-    magic in the plugin that I'll link to when I document it.
+Option 2: Autoload~
 
+If you're using an autoload file, create a file named
+`autoload/imgpaste/formatters/{format_name}.vim`, containing a function with the
+signature mentioned earlier in this section. Here's a Vim9script example: >
+    vim9script
 
---------------------------------------------------------------------------------
-4.3. Formatter helper functions
+    import autoload "imgpaste/util.vim" as util
 
-                                                          *imgformat#insert(text)*
-Inserts the provided {text} at the cursor location
+    export def Format(imgurl: string)
+        util.Insert(imgurl)
+    enddef
+<
 
+And that's it. Specify the filetypes you want to use this formatter with
+|g:ImgpasteFormatMap|, and imgpaste will automagically find the function you
+defined -- provided it's in the autoload lookup path.
 
 vim:ft=help
