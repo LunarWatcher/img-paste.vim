@@ -7,16 +7,19 @@ URL: https://github.com/LunarWatcher/img-paste.vim
 ================================================================================
 Table of contents~
 
-    1. Introduction ........................... |imgpaste-introduction|
-        1.1. What imgpaste is not ............. |imgpaste-not|
-    2. Supported formats ...................... |imgpaste-formats|
-        2.1. Built-in formats ................. |imgpaste-builtin-formats|
-    3. Config options ......................... |imgpaste-config|
-         ...................................... |g:ImgpasteFormatMap|
-         ...................................... |g:ImgpasteFormatters|
-    4. Custom formatters ...................... |imgpaste-formatters|
-        4.1. Formatter lookup order ........... |imgpaste-formatter-lookup|
-        4.1.1. Plugin definitions ............. |imgpaste-formatter-plugin-syntax|
+    1. Introduction ......................... |imgpaste-introduction|
+        1.1. What imgpaste is not ........... |imgpaste-not|
+    2. Supported formats .................... |imgpaste-formats|
+        2.1. Built-in formats ............... |imgpaste-builtin-formats|
+    3. Config options ....................... |imgpaste-config|
+         .................................... |g:ImgpasteFormatMap|
+         .................................... |g:ImgpasteFormatters|
+    4. Custom formatters .................... |imgpaste-formatters|
+        4.1. Built-in formatters ............ |imgpaste-builtin-formatters|
+        4.2. Defining a formatter ........... |imgpaste-define-formatter|
+    5. Keybinds ............................. |imgpaste-keybinds|
+    6. API functions ........................ |imgpaste-functions|
+         .................................... |imgpaste#InsertImage|
 
 ================================================================================
 1. Introduction                                            *imgpaste-introduction*
@@ -67,9 +70,8 @@ Format: >
     { 'filetype': 'imgpaste-specific format identifier' }
 <
 
-Default: >
-    {'markdown': 'markdown', 'tex': 'tex'}
-<
+Default: See source definition
+
 Note: This default will always be present. You can modify the defaults by
 overriding them in your .vimrc, but there's no way to remove entries from this
 map.
@@ -159,5 +161,28 @@ signature mentioned earlier in this section. Here's a Vim9script example: >
 And that's it. Specify the filetypes you want to use this formatter with
 |g:ImgpasteFormatMap|, and imgpaste will automagically find the function you
 defined -- provided it's in the autoload lookup path.
+
+================================================================================
+5. Keybinds                                                    *imgpaste-keybinds*
+
+The default keybinds are:
+* <C-i>: Pastes an image with path confirmation
+* <M-i>: Pastes an image with path confirmation, but without printing it into
+    the current document.
+    Can be used to quickly add an image to a project without leaving vim
+
+================================================================================
+6. API functions                                              *imgpaste-functions*
+
+--------------------------------------------------------------------------------
+                                                            *imgpaste#InsertImage*
+
+Parameters: 
+- confirm: bool = false: Determines whether or not to show a prompt asking to
+    confirm the paste path. Defaults to false.
+
+    Note that the default in the built-in keybind is true.
+- print: bool = True: Determines whether or not to invoke a printer in the
+    document.
 
 vim:ft=help

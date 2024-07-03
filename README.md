@@ -11,6 +11,10 @@ Plug 'LunarWatcher/img-paste.vim'
 
 Use `<C-i>` in normal mode to paste images. Config coming Soon:tm:. See also `:h imgpaste` for more documentation.
 
+## Supported operating systems
+
+Windows and Linux (theoretically under both X11 and Wayland; only X11 gets tested)
+
 ## Changes from upstream
 * Vim9script
 * There's a well-defined interface for defining arbitrary custom paste formats, and for defining what filetypes use what format

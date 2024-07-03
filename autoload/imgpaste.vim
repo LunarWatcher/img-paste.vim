@@ -4,7 +4,8 @@ vim9script
 g:ImgpasteFormatMap = extend(
     {
         'markdown': 'markdown',
-        'tex': 'tex'
+        'tex': 'tex',
+        'plaintex': 'tex',
     },
     get(g:, 'ImgpasteFormatMap', {})
 )
@@ -20,8 +21,7 @@ endif
 var scriptdir = fnamemodify(resolve(expand('<sfile>:p')), ':h:h') .. "/scripts/"
 # }}}
 
-
-def GetCmdLine(): list<string>
+def GetCmdLine(confirm: bool = false): list<string>
     var os = "Windows"
     var fscript = 'img-paste.ps1'
     if !(has("win64") || has("win32") || has("win16"))
@@ -29,48 +29,59 @@ def GetCmdLine(): list<string>
         fscript = 'img-paste.sh'
     endif
 
-    var ch = g:ImgpasteRootDir[0]
-    var outroot: string = ""
-    outroot = expand('%:p:h') .. '/' .. g:ImgpasteRootDir
+
 
     var rstr = printf('%06x', rand() % 0xffffff)
     var pattern = substitute(g:ImgpasteDefaultName, '%R', rstr, 'g')
     var imgsubpath = strftime(pattern)
-    var imgfullpath = outroot .. '/' .. imgsubpath
+    var img_output_path = g:ImgpasteRootDir .. '/' .. imgsubpath
 
-    var cmdline = scriptdir .. '/' .. fscript .. ' ' .. imgfullpath
+    if confirm
+        img_output_path = input("Image path (leave blank to cancel): ", img_output_path)
+        if img_output_path == ""
+            return []
+        endif
+    endif
+
+    var cmdline = scriptdir .. '/' .. fscript .. ' ' .. img_output_path
 
     if os == "Windows"
         cmdline = substitute(cmdline, '/', '\\', 'g')
     endif
 
-    return [ cmdline, imgfullpath ]
+    return [ cmdline, img_output_path ]
 enddef
 
 
-export def InsertImage()
+export def InsertImage(confirm: bool = false, print: bool = true)
     var Printer: func = null_function
 
-    if exists("g:ImgpasteFormatters") && g:ImgpasteFormatters->has_key(&ft)
-        Printer = g:ImgpasteFormatters[&ft]
-    else
-        if !exists("*imgpaste#formatters#" .. &ft .. "#Format")
-            # Force-load the autoload file, if it exists
-            # This doesn't seem to have any effect if the file doesn't exist,
-            # so no error handling required
-            # In an exists() block because why not?
-            exec "runtime autoload/imgpaste/formatters/" .. &ft .. ".vim"
+    if print
+        if exists("g:ImgpasteFormatters") && g:ImgpasteFormatters->has_key(&ft)
+            Printer = g:ImgpasteFormatters[&ft]
+        else
+            if !exists("*imgpaste#formatters#" .. &ft .. "#Format")
+                # Force-load the autoload file, if it exists
+                # This doesn't seem to have any effect if the file doesn't exist,
+                # so no error handling required
+                # In an exists() block because why not?
+                exec "runtime autoload/imgpaste/formatters/" .. &ft .. ".vim"
+            endif
+            if exists("*imgpaste#formatters#" .. &ft .. "#Format")
+                Printer = funcref("imgpaste#formatters#" .. &ft .. "#Format")
+            endif
         endif
-        if exists("*imgpaste#formatters#" .. &ft .. "#Format")
-            Printer = funcref("imgpaste#formatters#" .. &ft .. "#Format")
+
+        if (Printer == null_function)
+            echoerr "Image pasting not supported for this filetype:" &ft 
+            return
         endif
     endif
-
-    if (Printer == null_function)
-        echoerr "Image pasting not supported for this filetype:" &ft 
+    var res = GetCmdLine(confirm)
+    if res->len() == 0
+        echo "Image paste aborted"
         return
     endif
-    var res = GetCmdLine()
     var cmdline = res[0]
     var path = res[1]
 
@@ -81,5 +92,7 @@ export def InsertImage()
         return
     endif
 
-    Printer(path)
+    if print
+        Printer(path)
+    endif
 enddef

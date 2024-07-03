@@ -1,0 +1,37 @@
+let s:expect = themis#helper('expect')
+let g:Assert = themis#helper("assert")
+
+let g:ImgpasteRootDir = "test_images"
+
+syntax on
+filetype plugin indent on
+set noswapfile
+
+" Not sure why I have to use a function to forward, but okay
+fun! Expect(input)
+    return s:expect(a:input)
+endfun
+
+fun! CheckBuffImpl(input, output)
+    return join(getline(1, '$'), '\n') ==# a:output
+endfun
+
+fun! CopyDemoImg()
+    if has("linux")
+        call system("bash -c 'test -v DISPLAY && xclip -selection clipboard -t image/png -i test/_source/img.png'")
+        call system("bash -c 'test -v WAYLAND_DISPLAY && wl-copy < test/_source/img.png'")
+    elseif has("win")
+        call system("powershell.exe -command 'Get-ChildItem test/_source/img.png | Set-Clipboard'")
+    else
+        throw "unsupported OS"
+    endif
+endfun
+
+fun! ToMatchImpl(input, output)
+    %d " Clear the file
+    execute 'normal i' . a:input
+    return join(getline(1, '$'), '\n') ==# a:output
+endfun
+
+call themis#helper#expect#define_matcher('CheckBuff', function('CheckBuffImpl'), '"Expected:\n" . a:2 . "\nActual:\n". join(getline(1, ''$''), ''\n'')')
+call themis#helper#expect#define_matcher('ToMatch', function('ToMatchImpl'), '"Expected:\n" . a:2 . "\nActual:\n". join(getline(1, ''$''), ''\n'')')

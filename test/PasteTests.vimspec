@@ -1,0 +1,21 @@
+Describe paste functionality
+    Before each
+        call CopyDemoImg()
+    End
+    After each
+        bd!
+        call delete("test_images/", "rf")
+    End
+
+    It should format markdown correctly
+        set ft=markdown
+        call Expect(glob('test_images/*')->len() == 0)
+        call imgpaste#InsertImage(0, 1)
+        call Expect(glob('test_images/*')->len() == 1)
+
+        call Expect(
+            \ getline(1) =~ "\v\[[^\]]\]\(test_images/.*\.png\)"
+            \ )
+
+    End
+End
