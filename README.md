@@ -2,6 +2,8 @@
 
 Heavily refactored version of [loblab/img-paste.vim](https://github.com/loblab/img-paste.vim) (which itself is a rewrite of [img-paste-devs/img-paste.vim](https://github.com/img-paste-devs/img-paste.vim)). Also rewritten with vim9script, because I can :)
 
+As of 2026-03-08, this plugin is no longer maintained. Due to [AI slop in vim](https://hachyderm.io/@AndrewRadev/116175986749599825), I have moved to emacs with evil mode.
+
 ## Quick start
 
 ```vim
